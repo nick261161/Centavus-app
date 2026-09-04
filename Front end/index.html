@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centavus - Educação Financeira</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .fade-transition {
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden">
+
+  <!-- TOAST DE NOTIFICAÇÃO -->
+  <div id="toastNotification" class="fixed top-6 right-6 z-50 transform translate-y-[-200%] opacity-0 fade-transition bg-slate-900 border border-emerald-500/40 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-emerald-500/10 flex items-center gap-3">
+    <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <div>
+      <p class="text-xs font-bold text-emerald-400">Sucesso!</p>
+      <p id="toastMessage" class="text-xs text-slate-300">Operação realizada com sucesso.</p>
+    </div>
+  </div>
+
+  <!-- TELA DE LOGIN / CADASTRO -->
+  <div id="authScreen" class="w-full max-w-md bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl shadow-emerald-500/5 fade-transition">
+    <div class="text-center mb-8 flex flex-col items-center">
+      <div class="w-16 h-16 flex items-center justify-center mb-3 drop-shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" class="w-full h-full">
+          <defs>
+            <linearGradient id="emeraldGradLog" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#34d399" />
+              <stop offset="100%" stop-color="#059669" />
+            </linearGradient>
+          </defs>
+          <path d="M250 95 C 340 95, 385 130, 385 240 C 385 315, 315 375, 250 415 C 185 375, 115 315, 115 240 C 115 130, 160 95, 250 95 Z" fill="#090f1d" stroke="#1e293b" stroke-width="12" />
+          <path d="M250 160 C 250 160, 310 210, 310 270 C 310 305, 282 335, 250 335 C 218 335, 190 305, 190 270 C 190 210, 250 160, 250 160 Z" fill="url(#emeraldGradLog)" opacity="0.9" />
+          <path d="M250 195 V 305 M230 225 H 270 C 283 225, 283 250, 250 250 C 217 250, 217 275, 230 275 H 275" stroke="#020617" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+      </div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-white">CENTAVUS</h1>
+      <p id="authSubtitle" class="text-xs text-slate-400 mt-1">Sua independência financeira começa aqui</p>
+    </div>
+    
+    <!-- LOGIN FORM -->
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="text-xs text-slate-300 font-semibold uppercase tracking-wider">E-mail</label>
+        <input type="email" id="loginEmail" placeholder="seu@email.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all mt-1">
+      </div>
+      <div>
+        <label class="text-xs text-slate-300 font-semibold uppercase tracking-wider">Senha</label>
+        <input type="password" id="loginSenha" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all mt-1">
+      </div>
+      <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 text-sm mt-2">
+        Acessar Conta
+      </button>
+      <p id="loginError" class="text-rose-400 text-xs text-center mt-2 hidden font-medium">E-mail ou senha incorretos.</p>
+      
+      <div class="text-center mt-6">
+        <button type="button" onclick="toggleAuthMode('register')" class="text-xs text-slate-400 hover:text-emerald-400 font-medium transition-colors">
+          Não tem uma conta? <span class="text-emerald-400 underline">Cadastre-se</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="registerForm" class="space-y-4 hidden">
+      <div>
+        <label class="text-xs text-slate-300 font-semibold uppercase tracking-wider">Nome Completo</label>
+        <input type="text" id="regNome" placeholder="Seu Nome" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all mt-1">
+      </div>
+      <div>
+        <label class="text-xs text-slate-300 font-semibold uppercase tracking-wider">E-mail</label>
+        <input type="email" id="regEmail" placeholder="seu@email.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all mt-1">
+      </div>
+      <div>
+        <label class="text-xs text-slate-300 font-semibold uppercase tracking-wider">Criar Senha</label>
+        <input type="password" id="regSenha" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all mt-1">
+      </div>
+      <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 text-sm mt-2">
+        Finalizar Cadastro
+      </button>
+      <p id="regError" class="text-rose-400 text-xs text-center mt-2 hidden font-medium">Erro ao cadastrar. E-mail já em uso.</p>
+      
+      <div class="text-center mt-6">
+        <button type="button" onclick="toggleAuthMode('login')" class="text-xs text-slate-400 hover:text-emerald-400 font-medium transition-colors">
+          Já tem uma conta? <span class="text-emerald-400 underline">Faça login</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- PAINEL PRINCIPAL -->
+  <div id="appScreen" class="w-full max-w-5xl hidden space-y-6 fade-transition opacity-0 transform translate-y-4">
+    <header class="flex justify-between items-center bg-slate-900/85 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-800 shadow-xl">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" class="w-full h-full drop-shadow-md">
+            <defs>
+              <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#34d399" />
+                <stop offset="100%" stop-color="#059669" />
+              </linearGradient>
+            </defs>
+            <path d="M250 95 C 340 95, 385 130, 385 240 C 385 315, 315 375, 250 415 C 185 375, 115 315, 115 240 C 115 130, 160 95, 250 95 Z" fill="#090f1d" stroke="#1e293b" stroke-width="12" />
+            <path d="M250 160 C 250 160, 310 210, 310 270 C 310 305, 282 335, 250 335 C 218 335, 190 305, 190 270 C 190 210, 250 160, 250 160 Z" fill="url(#emeraldGrad)" opacity="0.9" />
+            <path d="M250 195 V 305 M230 225 H 270 C 283 225, 283 250, 250 250 C 217 250, 217 275, 230 275 H 275" stroke="#020617" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-black tracking-wider text-white">CENTAVUS</h1>
+          <p class="text-xs text-slate-400">Olá, <span id="userNameDisplay" class="text-emerald-400 font-semibold"></span></p>
+        </div>
+      </div>
+      <button onclick="logout()" class="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 active:scale-95 text-xs font-semibold px-4 py-2.5 rounded-xl border border-rose-500/20 transition-all flex items-center gap-2">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+      </button>
+    </header>
+
+    <!-- Filtro de Mês e Ano -->
+    <div class="bg-slate-900/80 backdrop-blur-xl p-4 rounded-2xl border border-slate-800 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-calendar-days text-emerald-400"></i> Período de Análise:</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <select id="filtroMes" onchange="carregarTransacoes()" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500 cursor-pointer">
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+        <select id="filtroAno" onchange="carregarTransacoes()" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500 cursor-pointer">
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <div class="flex gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
+      <button onclick="switchTab('dashboard')" id="btn-dashboard" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 transition-all shadow-md shadow-emerald-500/10 flex items-center gap-2 active:scale-95">
+        <i class="fa-solid fa-chart-pie"></i> Visão Geral
+      </button>
+      <button onclick="switchTab('cartao')" id="btn-cartao" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center gap-2 active:scale-95">
+        <i class="fa-solid fa-credit-card"></i> Cartão de Crédito
+      </button>
+      <button onclick="switchTab('pix')" id="btn-pix" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center gap-2 active:scale-95">
+        <i class="fa-solid fa-qrcode"></i> Pix & Débito
+      </button>
+      <button onclick="switchTab('cofrinho')" id="btn-cofrinho" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center gap-2 active:scale-95">
+        <i class="fa-solid fa-piggy-bank"></i> Cofrinho
+      </button>
+      <button onclick="switchTab('config')" id="btn-config" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center gap-2 active:scale-95">
+        <i class="fa-solid fa-gear"></i> Configurações
+      </button>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div class="bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl min-h-[450px]">
+      
+      <!-- ABA 1: DASHBOARD -->
+      <div id="tab-dashboard" class="tab-content space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-lg">
+            <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Total Gasto (Mês)</p>
+            <p id="labelTotalGasto" class="text-xl font-black text-white mt-1">R$ 0,00</p>
+            <p id="labelComparativo" class="text-[10px] text-slate-500 mt-1">Comparando com mês anterior...</p>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-lg">
+            <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Pix / Débito</p>
+            <p id="labelTotalPixDebito" class="text-xl font-black text-teal-400 mt-1">R$ 0,00</p>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-lg">
+            <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Fatura do Mês</p>
+            <p id="labelTotalCredito" class="text-xl font-black text-purple-400 mt-1">R$ 0,00</p>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-lg">
+            <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Cofrinho Acumulado</p>
+            <p id="labelCofrinhoGeral" class="text-xl font-black text-emerald-400 mt-1">R$ 0,00</p>
+          </div>
+        </div>
+
+        <!-- Formulário -->
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 space-y-4 shadow-xl">
+          <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
+            <i class="fa-solid fa-circle-plus"></i> Nova Movimentação Financeira
+          </h3>
+          <form id="transacaoForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">Descrição</label>
+              <input type="text" id="tDesc" placeholder="Ex: Lanche, Mesada, Uber" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500 outline-none mt-1">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">Valor Total (R$)</label>
+              <input type="number" step="0.01" id="tValor" placeholder="0.00" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500 outline-none mt-1">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">Tipo de Movimento</label>
+              <select id="tTipo" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none mt-1">
+                <option value="DESPESA">Despesa (Gasto)</option>
+                <option value="RECEITA">Entrada / Cofrinho</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">Forma de Pagamento</label>
+              <select id="tMetodo" onchange="toggleParcelas()" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none mt-1">
+                <option value="PIX">Pix</option>
+                <option value="DEBITO">Débito</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">Categoria</label>
+              <select id="tCategoria" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none mt-1">
+                <option value="Alimentação">Alimentação</option>
+                <option value="Transporte">Transporte</option>
+                <option value="Lazer">Lazer</option>
+                <option value="Cofrinho / Reserva">Cofrinho / Reserva</option>
+                <option value="Eletrônicos/Outros">Eletrônicos/Outros</option>
+              </select>
+            </div>
+            
+            <div id="divParcelas" class="hidden">
+              <label class="text-xs text-purple-400 font-semibold">Número de Parcelas</label>
+              <select id="tParcelas" class="w-full bg-slate-900 border border-purple-900/50 rounded-xl p-3 text-sm text-white outline-none mt-1">
+                <option value="1">1x (À vista)</option>
+                <option value="2">2x</option>
+                <option value="3">3x</option>
+                <option value="4">4x</option>
+                <option value="5">5x</option>
+                <option value="6">6x</option>
+                <option value="10">10x</option>
+                <option value="12">12x</option>
+              </select>
+            </div>
+
+            <div class="sm:col-span-2 pt-2">
+              <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/10">
+                Salvar Transação
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ABA 2: CARTÃO DE CRÉDITO -->
+      <div id="tab-cartao" class="tab-content hidden space-y-4">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-credit-card text-purple-400"></i> Fatura do Mês e Parcelamentos Ativos</h2>
+        <div id="listaCredito" class="space-y-3"></div>
+      </div>
+
+      <!-- ABA 3: PIX E DÉBITO -->
+      <div id="tab-pix" class="tab-content hidden space-y-4">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-qrcode text-teal-400"></i> Transações via Pix & Débito no Mês</h2>
+        <div id="listaPixDebito" class="space-y-3"></div>
+      </div>
+
+      <!-- ABA 4: COFRINHO -->
+      <div id="tab-cofrinho" class="tab-content hidden space-y-4">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-piggy-bank text-emerald-400"></i> Meu Cofrinho</h2>
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg space-y-2">
+          <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Guardado Acumulado</p>
+          <p id="labelCofrinho" class="text-3xl font-black text-emerald-400">R$ 0,00</p>
+        </div>
+        <div id="listaCofrinho" class="space-y-3 pt-2"></div>
+      </div>
+
+      <!-- ABA 5: CONFIGURAÇÕES -->
+      <div id="tab-config" class="tab-content hidden space-y-6">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-gear text-emerald-400"></i> Configurações da Conta</h2>
+        
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-5 shadow-lg">
+          <div>
+            <label class="text-xs text-slate-400 font-semibold">Como você quer ser chamado?</label>
+            <div class="flex gap-2 mt-1">
+              <input type="text" id="cfgNome" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none">
+              <button onclick="atualizarNome()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 rounded-xl text-xs transition-all active:scale-95">Salvar</button>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-800/80">
+            <label class="text-xs text-slate-400 font-semibold block mb-2">Tema do Sistema</label>
+            <div class="flex gap-3">
+              <button onclick="mudarTema('escuro')" class="flex-1 bg-slate-900 hover:border-emerald-500 border border-slate-800 p-3 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-moon text-indigo-400"></i> Escuro (Dark)
+              </button>
+              <button onclick="mudarTema('claro')" class="flex-1 bg-slate-100 hover:border-emerald-500 border border-slate-300 p-3 rounded-xl text-xs font-bold text-slate-900 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-sun text-amber-500"></i> Claro (Light)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let usuarioLogado = null;
+
+    function mostrarToast(mensagem) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMessage').innerText = mensagem;
+      toast.classList.remove('translate-y-[-200%]', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-[-200%]', 'opacity-0');
+      }, 3000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const hoje = new Date();
+      document.getElementById('filtroMes').value = hoje.getMonth() + 1;
+      document.getElementById('filtroAno').value = hoje.getFullYear();
+
+      const usuarioSalvo = localStorage.getItem('centavus_user');
+      if (usuarioSalvo) {
+        usuarioLogado = JSON.parse(usuarioSalvo);
+        document.getElementById('userNameDisplay').innerText = usuarioLogado.nome;
+        document.getElementById('cfgNome').value = usuarioLogado.nome;
+        
+        const authScreen = document.getElementById('authScreen');
+        const appScreen = document.getElementById('appScreen');
+        
+        authScreen.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => {
+          authScreen.classList.add('hidden');
+          appScreen.classList.remove('hidden');
+          setTimeout(() => {
+            appScreen.classList.remove('opacity-0', 'translate-y-4');
+          }, 50);
+        }, 300);
+
+        carregarTransacoes();
+      }
+    });
+
+    function toggleAuthMode(mode) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const subtitle = document.getElementById('authSubtitle');
+
+      if (mode === 'register') {
+        loginForm.classList.add('opacity-0');
+        setTimeout(() => {
+          loginForm.classList.add('hidden');
+          registerForm.classList.remove('hidden');
+          registerForm.classList.remove('opacity-0');
+          subtitle.innerText = 'Crie sua conta para começar';
+        }, 200);
+      } else {
+        registerForm.classList.add('opacity-0');
+        setTimeout(() => {
+          registerForm.classList.add('hidden');
+          loginForm.classList.remove('hidden');
+          loginForm.classList.remove('opacity-0');
+          subtitle.innerText = 'Sua independência financeira começa aqui';
+        }, 200);
+      }
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const nome = document.getElementById('regNome').value;
+      const email = document.getElementById('regEmail').value;
+      const senha = document.getElementById('regSenha').value;
+
+      try {
+        const response = await fetch('http://localhost:8080/usuarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, email, senha })
+        });
+
+        if (response.ok) {
+          mostrarToast('Conta criada com sucesso! Faça login.');
+          toggleAuthMode('login');
+          this.reset();
+        } else {
+          document.getElementById('regError').classList.remove('hidden');
+        }
+      } catch (error) {
+        alert('Erro ao conectar com a API.');
+      }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const senha = document.getElementById('loginSenha').value;
+
+      try {
+        const response = await fetch('http://localhost:8080/usuarios/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+
+        if (response.ok) {
+          usuarioLogado = await response.json();
+          localStorage.setItem('centavus_user', JSON.stringify(usuarioLogado));
+
+          document.getElementById('userNameDisplay').innerText = usuarioLogado.nome;
+          document.getElementById('cfgNome').value = usuarioLogado.nome;
+          
+          const authScreen = document.getElementById('authScreen');
+          const appScreen = document.getElementById('appScreen');
+          
+          authScreen.classList.add('opacity-0', 'scale-95');
+          setTimeout(() => {
+            authScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+            setTimeout(() => {
+              appScreen.classList.remove('opacity-0', 'translate-y-4');
+            }, 50);
+          }, 300);
+
+          carregarTransacoes();
+        } else {
+          document.getElementById('loginError').classList.remove('hidden');
+        }
+      } catch (error) {
+        alert('Erro ao conectar com a API.');
+      }
+    });
+
+    function logout() {
+      usuarioLogado = null;
+      localStorage.removeItem('centavus_user');
+      
+      const appScreen = document.getElementById('appScreen');
+      const authScreen = document.getElementById('authScreen');
+
+      appScreen.classList.add('opacity-0', 'translate-y-4');
+      setTimeout(() => {
+        appScreen.classList.add('hidden');
+        authScreen.classList.remove('hidden', 'opacity-0', 'scale-95');
+      }, 300);
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('bg-emerald-500', 'text-slate-950', 'shadow-md', 'shadow-emerald-500/10');
+        el.classList.add('text-slate-400');
+      });
+
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`btn-${tabName}`);
+      activeBtn.classList.remove('text-slate-400');
+      activeBtn.classList.add('bg-emerald-500', 'text-slate-950', 'shadow-md', 'shadow-emerald-500/10');
+    }
+
+    function toggleParcelas() {
+      const metodo = document.getElementById('tMetodo').value;
+      const divParcelas = document.getElementById('divParcelas');
+      if (metodo === 'CREDITO') {
+        divParcelas.classList.remove('hidden');
+      } else {
+        divParcelas.classList.add('hidden');
+        document.getElementById('tParcelas').value = "1";
+      }
+    }
+
+    function atualizarNome() {
+      if (!usuarioLogado) return;
+      const novoNome = document.getElementById('cfgNome').value;
+      if (!novoNome) return;
+
+      usuarioLogado.nome = novoNome;
+      localStorage.setItem('centavus_user', JSON.stringify(usuarioLogado));
+      document.getElementById('userNameDisplay').innerText = novoNome;
+      mostrarToast('Nome atualizado com sucesso!');
+    }
+
+    function mudarTema(tipo) {
+      if (tipo === 'claro') {
+        document.body.className = "bg-slate-100 text-slate-900 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden";
+        mostrarToast('Tema claro ativado!');
+      } else {
+        document.body.className = "bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden";
+        mostrarToast('Tema escuro ativado!');
+      }
+    }
+
+    async function carregarTransacoes() {
+      if (!usuarioLogado) return;
+      
+      const mesSelecionado = parseInt(document.getElementById('filtroMes').value);
+      const anoSelecionado = parseInt(document.getElementById('filtroAno').value);
+
+      try {
+        const response = await fetch(`http://localhost:8080/transacoes/usuario/${usuarioLogado.id}`);
+        if (response.ok) {
+          const transacoes = await response.json();
+          
+          let totalGastoMes = 0;
+          let totalPixDebitoMes = 0;
+          let totalImpactoCreditoMes = 0;
+          let totalCofrinhoGeral = 0;
+          let totalGastoMesAnterior = 0;
+
+          let htmlCredito = '';
+          let htmlPixDebito = '';
+          let htmlCofrinho = '';
+
+          let mesAnt = mesSelecionado - 1;
+          let anoAnt = anoSelecionado;
+          if (mesAnt === 0) { mesAnt = 12; anoAnt--; }
+
+          transacoes.forEach(t => {
+            const dataT = new Date(t.dataTransacao + 'T00:00:00');
+            const tMes = dataT.getMonth() + 1;
+            const tAno = dataT.getFullYear();
+
+            if (t.tipo === 'RECEITA' || t.categoria === 'Cofrinho / Reserva') {
+              totalCofrinhoGeral += t.valor;
+              if (tMes === mesSelecionado && tAno === anoSelecionado) {
+                htmlCofrinho += `
+                  <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-md">
+                    <div>
+                      <p class="font-bold text-emerald-400 text-sm">${t.descricao}</p>
+                      <p class="text-xs text-slate-400 mt-0.5">Depósito no cofrinho • ${t.dataTransacao}</p>
+                    </div>
+                    <span class="font-black text-sm text-emerald-400">+ R$ ${t.valor.toFixed(2)}</span>
+                  </div>
+                `;
+              }
+            }
+
+            if (t.tipo === 'DESPESA' && t.categoria !== 'Cofrinho / Reserva') {
+              if (tMes === mesAnt && tAno === anoAnt) {
+                if (t.metodoPagamento === 'CREDITO') {
+                  const p = t.parcelas || 1;
+                  totalGastoMesAnterior += (t.valor / p);
+                } else {
+                  totalGastoMesAnterior += t.valor;
+                }
+              }
+
+              if (t.metodoPagamento === 'PIX' || t.metodoPagamento === 'DEBITO') {
+                if (tMes === mesSelecionado && tAno === anoSelecionado) {
+                  totalPixDebitoMes += t.valor;
+                  totalGastoMes += t.valor;
+                  htmlPixDebito += `
+                    <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-md">
+                      <div>
+                        <p class="font-bold text-white text-sm">${t.descricao}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">${t.categoria} • ${t.dataTransacao}</p>
+                      </div>
+                      <span class="font-black text-sm text-teal-400">R$ ${t.valor.toFixed(2)}</span>
+                    </div>
+                  `;
+                }
+              } else if (t.metodoPagamento === 'CREDITO') {
+                const totalParcelas = t.parcelas || 1;
+                const valorParcela = t.valorParcela || (t.valor / totalParcelas);
+
+                let currentMonth = tMes;
+                let currentYear = tAno;
+
+                for (let i = 1; i <= totalParcelas; i++) {
+                  if (currentMonth === mesSelecionado && currentYear === anoSelecionado) {
+                    totalImpactoCreditoMes += valorParcela;
+                    totalGastoMes += valorParcela;
+
+                    htmlCredito += `
+                      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-md">
+                        <div>
+                          <p class="font-bold text-white text-sm">${t.descricao}</p>
+                          <p class="text-xs text-purple-400 font-semibold mt-0.5">Parcela ${i}/${totalParcelas} (R$ ${valorParcela.toFixed(2)}/mês)</p>
+                          <p class="text-[10px] text-slate-500">Compra original em: ${t.dataTransacao}</p>
+                        </div>
+                        <div class="text-right">
+                          <span class="font-black text-sm text-purple-300">R$ ${valorParcela.toFixed(2)}</span>
+                          <p class="text-[10px] text-slate-500">Total: R$ ${t.valor.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    `;
+                    break;
+                  }
+
+                  currentMonth++;
+                  if (currentMonth > 12) {
+                    currentMonth = 1;
+                    currentYear++;
+                  }
+                }
+              }
+            }
+          });
+
+          document.getElementById('labelTotalGasto').innerText = `R$ ${totalGastoMes.toFixed(2)}`;
+          document.getElementById('labelTotalPixDebito').innerText = `R$ ${totalPixDebitoMes.toFixed(2)}`;
+          document.getElementById('labelTotalCredito').innerText = `R$ ${totalImpactoCreditoMes.toFixed(2)}`;
+          document.getElementById('labelCofrinho').innerText = `R$ ${totalCofrinhoGeral.toFixed(2)}`;
+          document.getElementById('labelCofrinhoGeral').innerText = `R$ ${totalCofrinhoGeral.toFixed(2)}`;
+
+          const diff = totalGastoMes - totalGastoMesAnterior;
+          const compEl = document.getElementById('labelComparativo');
+          if (totalGastoMesAnterior === 0) {
+            compEl.innerText = 'Sem dados do mês anterior';
+            compEl.className = 'text-[10px] text-slate-500 mt-1';
+          } else if (diff > 0) {
+            compEl.innerText = `+R$ ${diff.toFixed(2)} que o mês passado`;
+            compEl.className = 'text-[10px] text-rose-400 font-semibold mt-1';
+          } else {
+            compEl.innerText = `R$ ${Math.abs(diff).toFixed(2)} a menos que mês passado`;
+            compEl.className = 'text-[10px] text-emerald-400 font-semibold mt-1';
+          }
+
+          document.getElementById('listaCredito').innerHTML = htmlCredito || '<p class="text-sm text-slate-500 italic">Nenhuma fatura de crédito para este mês.</p>';
+          document.getElementById('listaPixDebito').innerHTML = htmlPixDebito || '<p class="text-sm text-slate-500 italic">Nenhum gasto no Pix ou Débito neste mês.</p>';
+          document.getElementById('listaCofrinho').innerHTML = htmlCofrinho || '<p class="text-sm text-slate-500 italic">Nenhum depósito feito neste mês específico.</p>';
+        }
+      } catch (e) {
+        console.error("Erro ao buscar transações", e);
+      }
+    }
+
+    document.getElementById('transacaoForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!usuarioLogado) return;
+
+      const valorTotal = parseFloat(document.getElementById('tValor').value);
+      const tipo = document.getElementById('tTipo').value;
+      const metodo = document.getElementById('tMetodo').value;
+      const categoria = document.getElementById('tCategoria').value;
+      const parcelas = metodo === 'CREDITO' ? parseInt(document.getElementById('tParcelas').value) : 1;
+      const valorParcela = valorTotal / parcelas;
+
+      const novaTransacao = {
+        usuarioId: usuarioLogado.id,
+        descricao: document.getElementById('tDesc').value,
+        valor: valorTotal,
+        tipo: categoria === 'Cofrinho / Reserva' ? 'RECEITA' : tipo,
+        metodoPagamento: metodo,
+        categoria: categoria,
+        dataTransacao: new Date().toISOString().split('T')[0],
+        parcelas: parcelas,
+        valorParcela: valorParcela
+      };
+
+      try {
+        const response = await fetch('http://localhost:8080/transacoes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(novaTransacao)
+        });
+
+        if (response.ok) {
+          mostrarToast('Movimentação salva com sucesso!');
+          this.reset();
+          toggleParcelas();
+          carregarTransacoes();
+        } else {
+          alert('Erro ao salvar.');
+        }
+      } catch (error) {
+        alert('Erro de conexão.');
+      }
+    });
+  </script>
+</body>
+</html>
