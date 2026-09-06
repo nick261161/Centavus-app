@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Centavus - Educação Financeira</title>
   
+  <!-- Bibliotecas -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,8 +16,9 @@
     .fade-transition { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden">
+<body id="corpoApp" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden">
 
+  <!-- INDICADOR DE CARREGAMENTO / COLD START -->
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center hidden">
     <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
     <h3 class="text-lg font-bold text-white">Conectando ao Servidor...</h3>
@@ -26,6 +28,7 @@
     </button>
   </div>
 
+  <!-- TOAST DE NOTIFICAÇÃO -->
   <div id="toastNotification" class="fixed top-6 right-6 z-50 transform translate-y-[-200%] opacity-0 fade-transition bg-slate-900 border border-emerald-500/40 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-emerald-500/10 flex items-center gap-3">
     <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
       <i class="fa-solid fa-check"></i>
@@ -36,6 +39,7 @@
     </div>
   </div>
 
+  <!-- TELA DE LOGIN / CADASTRO -->
   <div id="authScreen" class="w-full max-w-md bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl border border-slate-800 shadow-2xl shadow-emerald-500/5 fade-transition">
     <div class="text-center mb-8 flex flex-col items-center">
       <div class="w-16 h-16 flex items-center justify-center mb-3 drop-shadow-lg">
@@ -55,6 +59,7 @@
       <p id="authSubtitle" class="text-xs text-slate-400 mt-1">Sua independência financeira começa aqui</p>
     </div>
     
+    <!-- LOGIN FORM -->
     <form id="loginForm" class="space-y-4">
       <div>
         <label class="text-xs text-slate-300 font-semibold uppercase tracking-wider">E-mail</label>
@@ -76,6 +81,7 @@
       </div>
     </form>
 
+    <!-- REGISTER FORM -->
     <form id="registerForm" class="space-y-4 hidden">
       <div>
         <label class="text-xs text-slate-300 font-semibold uppercase tracking-wider">Nome Completo</label>
@@ -102,6 +108,7 @@
     </form>
   </div>
 
+  <!-- PAINEL PRINCIPAL -->
   <div id="appScreen" class="w-full max-w-5xl hidden space-y-6 fade-transition opacity-0 transform translate-y-4">
     <header class="flex justify-between items-center bg-slate-900/85 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-800 shadow-xl">
       <div class="flex items-center gap-3.5">
@@ -118,6 +125,7 @@
       </button>
     </header>
 
+    <!-- Filtro de Mês e Ano -->
     <div class="bg-slate-900/80 backdrop-blur-xl p-4 rounded-2xl border border-slate-800 flex flex-wrap justify-between items-center gap-4">
       <div class="flex items-center gap-2">
         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-calendar-days text-emerald-400"></i> Período de Análise:</span>
@@ -144,6 +152,7 @@
       </div>
     </div>
 
+    <!-- Navegação por Abas -->
     <div class="flex gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
       <button onclick="switchTab('dashboard')" id="btn-dashboard" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 transition-all shadow-md shadow-emerald-500/10 flex items-center gap-2 active:scale-95">
         <i class="fa-solid fa-chart-pie"></i> Visão Geral
@@ -162,8 +171,10 @@
       </button>
     </div>
 
+    <!-- Conteúdo das Abas -->
     <div class="bg-slate-900/80 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl min-h-[450px]">
       
+      <!-- ABA 1: DASHBOARD -->
       <div id="tab-dashboard" class="tab-content space-y-6">
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 shadow-lg">
@@ -185,6 +196,7 @@
           </div>
         </div>
 
+        <!-- GRÁFICO E ALERTA DE ORÇAMENTO -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="md:col-span-2 bg-slate-950 p-6 rounded-2xl border border-slate-800/80 shadow-xl flex flex-col items-center justify-center">
             <h3 class="text-sm font-bold text-slate-300 self-start w-full mb-4 flex items-center gap-2">
@@ -218,6 +230,7 @@
           </div>
         </div>
 
+        <!-- Formulário Nova Movimentação -->
         <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 space-y-4 shadow-xl">
           <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
             <i class="fa-solid fa-circle-plus"></i> Nova Movimentação Financeira
@@ -280,16 +293,19 @@
         </div>
       </div>
 
+      <!-- ABA 2: CARTÃO DE CRÉDITO -->
       <div id="tab-cartao" class="tab-content hidden space-y-4">
         <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-credit-card text-purple-400"></i> Fatura do Mês e Parcelamentos Ativos</h2>
         <div id="listaCredito" class="space-y-3"></div>
       </div>
 
+      <!-- ABA 3: PIX E DÉBITO -->
       <div id="tab-pix" class="tab-content hidden space-y-4">
         <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-qrcode text-teal-400"></i> Transações via Pix & Débito no Mês</h2>
         <div id="listaPixDebito" class="space-y-3"></div>
       </div>
 
+      <!-- ABA 4: COFRINHO -->
       <div id="tab-cofrinho" class="tab-content hidden space-y-4">
         <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-piggy-bank text-emerald-400"></i> Meu Cofrinho</h2>
         <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-lg space-y-2">
@@ -299,9 +315,11 @@
         <div id="listaCofrinho" class="space-y-3 pt-2"></div>
       </div>
 
+      <!-- ABA 5: CONFIGURAÇÕES -->
       <div id="tab-config" class="tab-content hidden space-y-6">
         <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-gear text-emerald-400"></i> Configurações Avançadas da Conta</h2>
         
+        <!-- Bloco 1: Perfil -->
         <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-6 shadow-lg">
           <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-user-pen mr-1"></i> Perfil e Identificação</h3>
           
@@ -333,6 +351,7 @@
           </div>
         </div>
 
+        <!-- Bloco 2: Segurança -->
         <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
           <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider"><i class="fa-solid fa-shield-halved mr-1"></i> Segurança</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -350,6 +369,7 @@
           </div>
         </div>
 
+        <!-- Bloco 3: Preferências e Aparência (Alternância de Tema Corrigida) -->
         <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
           <h3 class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-sliders mr-1"></i> Preferências do Sistema</h3>
           
@@ -363,13 +383,16 @@
 
           <div class="flex items-center justify-between py-2">
             <div>
-              <p class="text-sm font-semibold text-white">Modo Escuro (Dark Theme)</p>
-              <p class="text-xs text-slate-400">Alternar entre o design padrão escuro e o tema claro.</p>
+              <p class="text-sm font-semibold text-white">Tema Visual</p>
+              <p class="text-xs text-slate-400">Alternar entre o modo Escuro e o modo Claro.</p>
             </div>
-            <button onclick="mudarTema('escuro')" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:border-emerald-500 transition-all">Alternar</button>
+            <button onclick="mudarTema()" class="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-xs font-bold text-white hover:border-emerald-500 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-circle-half-stroke text-emerald-400"></i> Alternar Tema
+            </button>
           </div>
         </div>
 
+        <!-- Bloco 4: Backup -->
         <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
           <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider"><i class="fa-solid fa-database mr-1"></i> Backup e Dados</h3>
           <p class="text-xs text-slate-400">Exporte todas as suas transações e dados financeiros do sistema para um arquivo CSV externo.</p>
@@ -389,7 +412,7 @@
     const API_URL = 'https://centavus-app.onrender.com';
     let usuarioLogado = null;
     let meuGrafico = null;
-    let cacheTransacoes = []; // Guarda as transações para exportação CSV
+    let cacheTransacoes = [];
 
     function toggleLoading(show) {
       const loader = document.getElementById('loadingOverlay');
@@ -423,11 +446,9 @@
       }, 3000);
     }
 
-    // Gerenciamento de Foto e Iniciais do Perfil
     function atualizarAvatarUI(nome, fotoBase64) {
       const iniciais = nome ? nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NC';
       
-      // Header
       const headerContainer = document.getElementById('avatarHeaderContainer');
       if (fotoBase64) {
         headerContainer.innerHTML = `<img src="${fotoBase64}" class="w-full h-full object-cover">`;
@@ -435,7 +456,6 @@
         document.getElementById('avatarHeaderInitials').innerText = iniciais;
       }
 
-      // Aba Configurações
       const configPreview = document.getElementById('configAvatarPreview');
       if (fotoBase64) {
         configPreview.innerHTML = `<img src="${fotoBase64}" class="w-full h-full object-cover">`;
@@ -465,6 +485,12 @@
       const hoje = new Date();
       document.getElementById('filtroMes').value = hoje.getMonth() + 1;
       document.getElementById('filtroAno').value = hoje.getFullYear();
+
+      // Carrega tema salvo se houver
+      const temaSalvo = localStorage.getItem('centavus_tema');
+      if (temaSalvo === 'claro') {
+        aplicarTemaClaro();
+      }
 
       const usuarioSalvo = localStorage.getItem('centavus_user');
       if (usuarioSalvo) {
@@ -652,13 +678,26 @@
       document.getElementById('cfgConfirmaSenha').value = '';
     }
 
-    function mudarTema(tipo) {
-      if (tipo === 'claro') {
-        document.body.className = "bg-slate-100 text-slate-900 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden";
-        mostrarToast('Tema claro ativado!');
+    function aplicarTemaClaro() {
+      const corpo = document.getElementById('corpoApp');
+      corpo.className = "bg-slate-100 text-slate-900 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden";
+      localStorage.setItem('centavus_tema', 'claro');
+      mostrarToast('Tema claro ativado!');
+    }
+
+    function aplicarTemaEscuro() {
+      const corpo = document.getElementById('corpoApp');
+      corpo.className = "bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden";
+      localStorage.setItem('centavus_tema', 'escuro');
+      mostrarToast('Tema escuro ativado!');
+    }
+
+    function mudarTema() {
+      const corpo = document.getElementById('corpoApp');
+      if (corpo.classList.contains('bg-slate-950')) {
+        aplicarTemaClaro();
       } else {
-        document.body.className = "bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden";
-        mostrarToast('Tema escuro ativado!');
+        aplicarTemaEscuro();
       }
     }
 
@@ -691,7 +730,7 @@
         const response = await fetch(`${API_URL}/transacoes/usuario/${usuarioLogado.id}`);
         if (response.ok) {
           const transacoes = await response.json();
-          cacheTransacoes = transacoes; // Armazena para o CSV
+          cacheTransacoes = transacoes;
           
           let totalGastoMes = 0;
           let totalPixDebitoMes = 0;
