@@ -18,7 +18,7 @@
 </head>
 <body id="corpoApp" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden">
 
-  <!-- TELA DE CARREGAMENTO / COLD START (APARECE SÓ NA ABERTURA DO SITE) -->
+  <!-- TELA DE CARREGAMENTO / COLD START -->
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center hidden">
     <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
     <h3 class="text-lg font-bold text-white">Conectando ao Servidor...</h3>
@@ -232,9 +232,9 @@
           </div>
         </div>
 
-        <!-- Formulário Nova Movimentação -->
-        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 space-y-4 shadow-xl">
-          <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
+        <!-- Formulário Nova Movimentação / Edição -->
+        <div id="containerForm" class="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 space-y-4 shadow-xl transition-all duration-300">
+          <h3 id="tituloFormulario" class="text-sm font-bold text-emerald-400 flex items-center gap-2">
             <i class="fa-solid fa-circle-plus"></i> Nova Movimentação Financeira
           </h3>
           <form id="transacaoForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -286,9 +286,12 @@
               </select>
             </div>
 
-            <div class="sm:col-span-2 pt-2">
-              <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/10">
+            <div class="sm:col-span-2 pt-2 flex flex-col sm:flex-row gap-3">
+              <button type="submit" id="btnSalvarForm" class="flex-1 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-500/10">
                 Salvar Transação
+              </button>
+              <button type="button" id="btnCancelarEdicao" onclick="cancelarEdicao()" class="hidden flex-1 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg border border-slate-700">
+                Cancelar Edição
               </button>
             </div>
           </form>
@@ -417,6 +420,7 @@
     let cacheTransacoes = [];
     let cronometroIntervalo = null;
     let segundosRestantes = 7;
+    let transacaoEditandoId = null; // Variável global de controle para Edição
 
     function iniciarCronometroLoader() {
       segundosRestantes = 7;
@@ -449,6 +453,13 @@
       v = v.replace(".", ",");
       v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
       input.value = "R$ " + v;
+    }
+    
+    function formatarParaMoedaBR(valor) {
+      let v = parseFloat(valor).toFixed(2);
+      v = v.replace(".", ",");
+      v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+      return "R$ " + v;
     }
 
     function converterValorParaNumero(texto) {
@@ -513,13 +524,11 @@
       document.getElementById('filtroMes').value = hoje.getMonth() + 1;
       document.getElementById('filtroAno').value = hoje.getFullYear();
 
-      // Carrega tema salvo
       const temaSalvo = localStorage.getItem('centavus_tema');
       if (temaSalvo === 'claro') {
         aplicarTemaClaro();
       }
 
-      // Exibe a tela de carregamento inicial APENAS na abertura da página
       const loader = document.getElementById('loadingOverlay');
       if (loader) {
         loader.classList.remove('hidden');
@@ -682,6 +691,74 @@
       }
     }
 
+    // --- FUNCIONALIDADE DE EDIÇÃO E EXCLUSÃO ---
+    async function deletarTransacao(id) {
+      if (!confirm("Tem certeza que deseja excluir esta movimentação permanentemente?")) return;
+      
+      try {
+        const response = await fetch(`${API_URL}/transacoes/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+          mostrarToast('Movimentação excluída com sucesso!');
+          carregarTransacoes();
+        } else {
+          alert('Erro ao excluir a transação no servidor.');
+        }
+      } catch (error) {
+        alert('Erro de conexão ao tentar excluir.');
+      }
+    }
+
+    function prepararEdicao(id) {
+      const t = cacheTransacoes.find(x => x.id === id);
+      if (!t) return;
+      
+      transacaoEditandoId = id; // Entra no modo de edição
+      switchTab('dashboard'); // Volta para a tela principal
+      document.getElementById('containerForm').scrollIntoView({ behavior: 'smooth' }); // Desce a tela até o formulário
+      
+      document.getElementById('tituloFormulario').innerHTML = `<i class="fa-solid fa-pen"></i> Editando Movimentação`;
+      document.getElementById('tituloFormulario').classList.replace('text-emerald-400', 'text-blue-400');
+      
+      document.getElementById('tDesc').value = t.descricao;
+      document.getElementById('tValor').value = formatarParaMoedaBR(t.valor);
+      document.getElementById('tTipo').value = t.tipo;
+      document.getElementById('tMetodo').value = t.metodoPagamento;
+      document.getElementById('tCategoria').value = t.categoria;
+      
+      if (t.metodoPagamento === 'CREDITO') {
+        document.getElementById('divParcelas').classList.remove('hidden');
+        document.getElementById('tParcelas').value = t.parcelas;
+      } else {
+        document.getElementById('divParcelas').classList.add('hidden');
+        document.getElementById('tParcelas').value = "1";
+      }
+      
+      const btnSalvar = document.getElementById('btnSalvarForm');
+      btnSalvar.innerText = "Atualizar Valores";
+      btnSalvar.classList.replace('bg-emerald-500', 'bg-blue-500');
+      btnSalvar.classList.replace('hover:bg-emerald-400', 'hover:bg-blue-400');
+      
+      document.getElementById('btnCancelarEdicao').classList.remove('hidden');
+    }
+
+    function cancelarEdicao() {
+      transacaoEditandoId = null;
+      document.getElementById('transacaoForm').reset();
+      document.getElementById('tValor').value = "R$ 0,00";
+      toggleParcelas();
+      
+      document.getElementById('tituloFormulario').innerHTML = `<i class="fa-solid fa-circle-plus"></i> Nova Movimentação Financeira`;
+      document.getElementById('tituloFormulario').classList.replace('text-blue-400', 'text-emerald-400');
+      
+      const btnSalvar = document.getElementById('btnSalvarForm');
+      btnSalvar.innerText = "Salvar Transação";
+      btnSalvar.classList.replace('bg-blue-500', 'bg-emerald-500');
+      btnSalvar.classList.replace('hover:bg-blue-400', 'hover:bg-emerald-400');
+      
+      document.getElementById('btnCancelarEdicao').classList.add('hidden');
+    }
+    // ------------------------------------------
+
     function atualizarDadosPerfil() {
       if (!usuarioLogado) return;
       const novoNome = document.getElementById('cfgNome').value;
@@ -789,25 +866,25 @@
                   <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-md">
                     <div>
                       <p class="font-bold text-emerald-400 text-sm">${t.descricao}</p>
-                      <p class="text-xs text-slate-400 mt-0.5">Depósito no cofrinho • ${t.dataTransacao}</p>
+                      <p class="text-xs text-slate-400 mt-0.5">Depósito • ${t.dataTransacao}</p>
                     </div>
-                    <span class="font-black text-sm text-emerald-400">+ R$ ${t.valor.toFixed(2)}</span>
+                    <div class="flex flex-col items-end gap-1">
+                      <span class="font-black text-sm text-emerald-400">+ R$ ${t.valor.toFixed(2)}</span>
+                      <div class="flex gap-3 text-xs mt-1">
+                        <button onclick="prepararEdicao(${t.id})" class="text-blue-400 hover:text-blue-300 transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deletarTransacao(${t.id})" class="text-rose-500 hover:text-rose-400 transition-colors" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                      </div>
+                    </div>
                   </div>
                 `;
               }
             }
 
             if (t.tipo === 'DESPESA' && t.categoria !== 'Cofrinho / Reserva') {
-              if (tMes === mesAnt && tAno === anoAnt) {
-                if (t.metodoPagamento === 'CREDITO') {
-                  const p = t.parcelas || 1;
-                  totalGastoMesAnterior += (t.valor / p);
-                } else {
+              if (t.metodoPagamento === 'PIX' || t.metodoPagamento === 'DEBITO') {
+                if (tMes === mesAnt && tAno === anoAnt) {
                   totalGastoMesAnterior += t.valor;
                 }
-              }
-
-              if (t.metodoPagamento === 'PIX' || t.metodoPagamento === 'DEBITO') {
                 if (tMes === mesSelecionado && tAno === anoSelecionado) {
                   totalPixDebitoMes += t.valor;
                   totalGastoMes += t.valor;
@@ -819,13 +896,19 @@
                         <p class="font-bold text-white text-sm">${t.descricao}</p>
                         <p class="text-xs text-slate-400 mt-0.5">${t.categoria} • ${t.dataTransacao}</p>
                       </div>
-                      <span class="font-black text-sm text-teal-400">R$ ${t.valor.toFixed(2)}</span>
+                      <div class="flex flex-col items-end gap-1">
+                        <span class="font-black text-sm text-teal-400">R$ ${t.valor.toFixed(2)}</span>
+                        <div class="flex gap-3 text-xs mt-1">
+                          <button onclick="prepararEdicao(${t.id})" class="text-blue-400 hover:text-blue-300 transition-colors" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                          <button onclick="deletarTransacao(${t.id})" class="text-rose-500 hover:text-rose-400 transition-colors" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                      </div>
                     </div>
                   `;
                 }
               } else if (t.metodoPagamento === 'CREDITO') {
                 const totalParcelas = t.parcelas || 1;
-                const valorParcela = t.valorParcela || (t.valor / totalParcelas);
+                const valorParcela = t.valorParcela || (t.valor / totalParcelas); // Divisão precisa mantida
 
                 let currentMonth = tMes;
                 let currentYear = tAno;
@@ -843,9 +926,12 @@
                           <p class="text-xs text-purple-400 font-semibold mt-0.5">Parcela ${i}/${totalParcelas} (R$ ${valorParcela.toFixed(2)}/mês)</p>
                           <p class="text-[10px] text-slate-500">Compra original em: ${t.dataTransacao}</p>
                         </div>
-                        <div class="text-right">
+                        <div class="flex flex-col items-end gap-1">
                           <span class="font-black text-sm text-purple-300">R$ ${valorParcela.toFixed(2)}</span>
-                          <p class="text-[10px] text-slate-500">Total: R$ ${t.valor.toFixed(2)}</p>
+                          <div class="flex gap-3 text-xs mt-1 justify-end">
+                            <button onclick="prepararEdicao(${t.id})" class="text-blue-400 hover:text-blue-300 transition-colors" title="Editar Compra"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deletarTransacao(${t.id})" class="text-rose-500 hover:text-rose-400 transition-colors" title="Excluir Compra"><i class="fa-solid fa-trash"></i></button>
+                          </div>
                         </div>
                       </div>
                     `;
@@ -971,7 +1057,16 @@
       const metodo = document.getElementById('tMetodo').value;
       const categoria = document.getElementById('tCategoria').value;
       const parcelas = metodo === 'CREDITO' ? parseInt(document.getElementById('tParcelas').value) : 1;
-      const valorParcela = valorTotal / parcelas;
+      
+      // DIVISÃO MATEMÁTICA CORRETA DOS CENTAVOS E PROJEÇÃO AUTOMÁTICA
+      const valorParcela = Number((valorTotal / parcelas).toFixed(2));
+
+      // Se estiver editando, mantemos a data original. Se for novo, gera a data de hoje.
+      let dataFinal = new Date().toISOString().split('T')[0];
+      if (transacaoEditandoId) {
+        const transAntiga = cacheTransacoes.find(x => x.id === transacaoEditandoId);
+        if (transAntiga) dataFinal = transAntiga.dataTransacao;
+      }
 
       const novaTransacao = {
         usuarioId: usuarioLogado.id,
@@ -980,29 +1075,36 @@
         tipo: categoria === 'Cofrinho / Reserva' ? 'RECEITA' : tipo,
         metodoPagamento: metodo,
         categoria: categoria,
-        dataTransacao: new Date().toISOString().split('T')[0],
+        dataTransacao: dataFinal,
         parcelas: parcelas,
         valorParcela: valorParcela
       };
 
       try {
-        const response = await fetch(`${API_URL}/transacoes`, {
-          method: 'POST',
+        let endpoint = `${API_URL}/transacoes`;
+        let methodHTTP = 'POST';
+
+        // Mudar para Atualização (PUT) caso estejamos editando
+        if (transacaoEditandoId !== null) {
+          endpoint = `${API_URL}/transacoes/${transacaoEditandoId}`;
+          methodHTTP = 'PUT';
+        }
+
+        const response = await fetch(endpoint, {
+          method: methodHTTP,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(novaTransacao)
         });
 
         if (response.ok) {
-          mostrarToast('Movimentação salva com sucesso!');
-          this.reset();
-          document.getElementById('tValor').value = "R$ 0,00";
-          toggleParcelas();
-          carregarTransacoes();
+          mostrarToast(transacaoEditandoId ? 'Atualizado com sucesso!' : 'Salvo com sucesso!');
+          cancelarEdicao(); // reseta o formulário todo
+          carregarTransacoes(); // recarrega a lista
         } else {
-          alert('Erro ao salvar.');
+          alert('Erro ao salvar no banco de dados.');
         }
       } catch (error) {
-        alert('Erro de conexão.');
+        alert('Erro de conexão ao salvar.');
       }
     });
   </script>
