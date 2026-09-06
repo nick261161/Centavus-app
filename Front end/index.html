@@ -18,14 +18,14 @@
 </head>
 <body id="corpoApp" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden">
 
-  <!-- TELA DE CARREGAMENTO / LÍDER COM CRONÔMETRO DE 7 SEGUNDOS -->
+  <!-- TELA DE CARREGAMENTO / COLD START (APARECE SÓ NA ABERTURA DO SITE) -->
   <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center hidden">
     <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
     <h3 class="text-lg font-bold text-white">Conectando ao Servidor...</h3>
     <p class="text-xs text-slate-400 max-w-sm mt-1 mb-2">O servidor está inicializando. Fechamento automático em <span id="contadorRegressivo" class="text-emerald-400 font-bold">7</span> segundos.</p>
     <div class="mt-4">
       <button onclick="fecharLoaderManual()" class="bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 px-4 py-2.5 rounded-xl transition-all border border-slate-700">
-        <i class="fa-solid fa-xmark mr-1.5"></i> Ocultar aviso e sair da tela
+        <i class="fa-solid fa-xmark mr-1.5"></i> Ocultar aviso e continuar
       </button>
     </div>
   </div>
@@ -431,24 +431,16 @@
 
         if (segundosRestantes <= 0) {
           clearInterval(cronometroIntervalo);
-          toggleLoading(false); // Fecha automaticamente após 7 segundos
+          const loader = document.getElementById('loadingOverlay');
+          if (loader) loader.classList.add('hidden');
         }
       }, 1000);
     }
 
-    function toggleLoading(show) {
-      const loader = document.getElementById('loadingOverlay');
-      if (show) {
-        loader.classList.remove('hidden');
-        iniciarCronometroLoader();
-      } else {
-        loader.classList.add('hidden');
-        if (cronometroIntervalo) clearInterval(cronometroIntervalo);
-      }
-    }
-
     function fecharLoaderManual() {
-      toggleLoading(false);
+      const loader = document.getElementById('loadingOverlay');
+      if (loader) loader.classList.add('hidden');
+      if (cronometroIntervalo) clearInterval(cronometroIntervalo);
     }
 
     function mascaraMoeda(input) {
@@ -527,8 +519,12 @@
         aplicarTemaClaro();
       }
 
-      // Dispara automaticamente o cronômetro da líder ao abrir o site
-      toggleLoading(true);
+      // Exibe a tela de carregamento inicial APENAS na abertura da página
+      const loader = document.getElementById('loadingOverlay');
+      if (loader) {
+        loader.classList.remove('hidden');
+        iniciarCronometroLoader();
+      }
 
       const usuarioSalvo = localStorage.getItem('centavus_user');
       if (usuarioSalvo) {
@@ -586,7 +582,6 @@
       const email = document.getElementById('regEmail').value;
       const senha = document.getElementById('regSenha').value;
 
-      toggleLoading(true);
       try {
         const response = await fetch(`${API_URL}/usuarios`, {
           method: 'POST',
@@ -603,8 +598,6 @@
         }
       } catch (error) {
         alert('Erro ao conectar com a API.');
-      } finally {
-        toggleLoading(false);
       }
     });
 
@@ -613,7 +606,6 @@
       const email = document.getElementById('loginEmail').value;
       const senha = document.getElementById('loginSenha').value;
 
-      toggleLoading(true);
       try {
         const response = await fetch(`${API_URL}/usuarios/login`, {
           method: 'POST',
@@ -649,8 +641,6 @@
         }
       } catch (error) {
         alert('Erro ao conectar com a API.');
-      } finally {
-        toggleLoading(false);
       }
     });
 
@@ -995,7 +985,6 @@
         valorParcela: valorParcela
       };
 
-      toggleLoading(true);
       try {
         const response = await fetch(`${API_URL}/transacoes`, {
           method: 'POST',
@@ -1014,8 +1003,6 @@
         }
       } catch (error) {
         alert('Erro de conexão.');
-      } finally {
-        toggleLoading(false);
       }
     });
   </script>
