@@ -4,17 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Centavus - Educação Financeira</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .fade-transition {
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
+    .fade-transition { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 selection:bg-emerald-500 selection:text-slate-950 relative overflow-x-hidden">
+
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center hidden">
+    <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+    <h3 class="text-lg font-bold text-white">Conectando ao Servidor...</h3>
+    <p class="text-xs text-slate-400 max-w-sm mt-1 mb-6">Como a hospedagem é gratuita, o servidor pode levar alguns segundos para inicializar no primeiro acesso.</p>
+    <button onclick="toggleLoading(false)" class="bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 px-4 py-2.5 rounded-xl transition-all border border-slate-700">
+      <i class="fa-solid fa-xmark mr-1.5"></i> Ocultar aviso e continuar
+    </button>
+  </div>
 
   <div id="toastNotification" class="fixed top-6 right-6 z-50 transform translate-y-[-200%] opacity-0 fade-transition bg-slate-900 border border-emerald-500/40 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-emerald-500/10 flex items-center gap-3">
     <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
@@ -95,18 +105,8 @@
   <div id="appScreen" class="w-full max-w-5xl hidden space-y-6 fade-transition opacity-0 transform translate-y-4">
     <header class="flex justify-between items-center bg-slate-900/85 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-slate-800 shadow-xl">
       <div class="flex items-center gap-3.5">
-        <div class="w-12 h-12 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" class="w-full h-full drop-shadow-md">
-            <defs>
-              <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#34d399" />
-                <stop offset="100%" stop-color="#059669" />
-              </linearGradient>
-            </defs>
-            <path d="M250 95 C 340 95, 385 130, 385 240 C 385 315, 315 375, 250 415 C 185 375, 115 315, 115 240 C 115 130, 160 95, 250 95 Z" fill="#090f1d" stroke="#1e293b" stroke-width="12" />
-            <path d="M250 160 C 250 160, 310 210, 310 270 C 310 305, 282 335, 250 335 C 218 335, 190 305, 190 270 C 190 210, 250 160, 250 160 Z" fill="url(#emeraldGrad)" opacity="0.9" />
-            <path d="M250 195 V 305 M230 225 H 270 C 283 225, 283 250, 250 250 C 217 250, 217 275, 230 275 H 275" stroke="#020617" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          </svg>
+        <div id="avatarHeaderContainer" class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center overflow-hidden text-emerald-400 font-bold text-lg shadow-md">
+          <span id="avatarHeaderInitials">NC</span>
         </div>
         <div>
           <h1 class="text-xl font-black tracking-wider text-white">CENTAVUS</h1>
@@ -185,6 +185,39 @@
           </div>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-2 bg-slate-950 p-6 rounded-2xl border border-slate-800/80 shadow-xl flex flex-col items-center justify-center">
+            <h3 class="text-sm font-bold text-slate-300 self-start w-full mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-chart-pie text-indigo-400"></i> Despesas por Categoria
+            </h3>
+            <div class="w-full max-w-[280px] aspect-square relative">
+              <canvas id="graficoCategorias"></canvas>
+            </div>
+            <p id="graficoVazio" class="hidden text-xs text-slate-500 mt-4">Sem dados para exibir neste mês.</p>
+          </div>
+
+          <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 shadow-xl flex flex-col justify-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500 transition-all duration-500" id="barraOrcamento"></div>
+            <h3 class="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-bullseye text-rose-400"></i> Limite Mensal
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Acompanhe seu teto de gastos definido para o mês.</p>
+            
+            <div class="space-y-1">
+              <p class="text-[10px] text-slate-500 font-semibold uppercase">Orçamento Atual</p>
+              <div class="flex gap-2 items-center">
+                <input type="number" id="inputOrcamento" value="1500" class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-sm text-white w-24 outline-none focus:border-emerald-500">
+                <button onclick="carregarTransacoes()" class="bg-slate-800 hover:bg-slate-700 text-xs text-white px-3 py-2 rounded-lg transition-all">Definir</button>
+              </div>
+            </div>
+
+            <div class="mt-5 pt-5 border-t border-slate-800/80">
+              <p id="statusOrcamentoMsg" class="text-sm font-bold text-emerald-400 mb-1">Dentro do Limite!</p>
+              <p id="statusOrcamentoPercent" class="text-xs text-slate-400">Você gastou 0% do seu orçamento.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800/80 space-y-4 shadow-xl">
           <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
             <i class="fa-solid fa-circle-plus"></i> Nova Movimentação Financeira
@@ -195,8 +228,8 @@
               <input type="text" id="tDesc" placeholder="Ex: Lanche, Mesada, Uber" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500 outline-none mt-1">
             </div>
             <div>
-              <label class="text-xs text-slate-400 font-semibold">Valor Total (R$)</label>
-              <input type="number" step="0.01" id="tValor" placeholder="0.00" required class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500 outline-none mt-1">
+              <label class="text-xs text-slate-400 font-semibold">Valor Total</label>
+              <input type="text" id="tValor" placeholder="R$ 0,00" required oninput="mascaraMoeda(this)" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500 outline-none mt-1">
             </div>
             <div>
               <label class="text-xs text-slate-400 font-semibold">Tipo de Movimento</label>
@@ -267,29 +300,86 @@
       </div>
 
       <div id="tab-config" class="tab-content hidden space-y-6">
-        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-gear text-emerald-400"></i> Configurações da Conta</h2>
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-gear text-emerald-400"></i> Configurações Avançadas da Conta</h2>
         
-        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-5 shadow-lg">
-          <div>
-            <label class="text-xs text-slate-400 font-semibold">Como você quer ser chamado?</label>
-            <div class="flex gap-2 mt-1">
-              <input type="text" id="cfgNome" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none">
-              <button onclick="atualizarNome()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 rounded-xl text-xs transition-all active:scale-95">Salvar</button>
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-6 shadow-lg">
+          <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-user-pen mr-1"></i> Perfil e Identificação</h3>
+          
+          <div class="flex flex-col sm:flex-row items-center gap-6">
+            <div class="relative group cursor-pointer" onclick="document.getElementById('inputFotoPerfil').click()">
+              <div id="configAvatarPreview" class="w-20 h-20 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500/40 flex items-center justify-center overflow-hidden text-emerald-400 font-bold text-2xl shadow-lg">
+                <span id="configAvatarInitials">NC</span>
+              </div>
+              <div class="absolute inset-0 bg-slate-950/60 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <i class="fa-solid fa-camera text-white text-sm"></i>
+              </div>
+              <input type="file" id="inputFotoPerfil" accept="image/*" class="hidden" onchange="carregarFotoPerfil(event)">
+            </div>
+            
+            <div class="flex-1 w-full space-y-3">
+              <div>
+                <label class="text-xs text-slate-400 font-semibold">Nome Completo</label>
+                <input type="text" id="cfgNome" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none mt-1">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 font-semibold">E-mail de Contato</label>
+                <input type="email" id="cfgEmail" disabled class="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-slate-400 outline-none mt-1 cursor-not-allowed">
+              </div>
             </div>
           </div>
 
-          <div class="pt-4 border-t border-slate-800/80">
-            <label class="text-xs text-slate-400 font-semibold block mb-2">Tema do Sistema</label>
-            <div class="flex gap-3">
-              <button onclick="mudarTema('escuro')" class="flex-1 bg-slate-900 hover:border-emerald-500 border border-slate-800 p-3 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-moon text-indigo-400"></i> Escuro (Dark)
-              </button>
-              <button onclick="mudarTema('claro')" class="flex-1 bg-slate-100 hover:border-emerald-500 border border-slate-300 p-3 rounded-xl text-xs font-bold text-slate-900 transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-sun text-amber-500"></i> Claro (Light)
-              </button>
-            </div>
+          <div class="flex justify-end pt-2">
+            <button onclick="atualizarDadosPerfil()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs transition-all active:scale-95 shadow-lg shadow-emerald-500/10">Salvar Alterações</button>
           </div>
         </div>
+
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
+          <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider"><i class="fa-solid fa-shield-halved mr-1"></i> Segurança</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">Nova Senha</label>
+              <input type="password" id="cfgNovaSenha" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none mt-1">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 font-semibold">Confirmar Nova Senha</label>
+              <input type="password" id="cfgConfirmaSenha" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-white focus:border-emerald-500 outline-none mt-1">
+            </div>
+          </div>
+          <div class="flex justify-end pt-2">
+            <button onclick="alterarSenha()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all active:scale-95">Atualizar Senha</button>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
+          <h3 class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-sliders mr-1"></i> Preferências do Sistema</h3>
+          
+          <div class="flex items-center justify-between py-2 border-b border-slate-900">
+            <div>
+              <p class="text-sm font-semibold text-white">Alertas de Limite de Gastos</p>
+              <p class="text-xs text-slate-400">Avisar visualmente quando o orçamento mensal estiver próximo do teto.</p>
+            </div>
+            <input type="checkbox" id="prefAlertas" checked class="w-4 h-4 accent-emerald-500 cursor-pointer">
+          </div>
+
+          <div class="flex items-center justify-between py-2">
+            <div>
+              <p class="text-sm font-semibold text-white">Modo Escuro (Dark Theme)</p>
+              <p class="text-xs text-slate-400">Alternar entre o design padrão escuro e o tema claro.</p>
+            </div>
+            <button onclick="mudarTema('escuro')" class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:border-emerald-500 transition-all">Alternar</button>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
+          <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider"><i class="fa-solid fa-database mr-1"></i> Backup e Dados</h3>
+          <p class="text-xs text-slate-400">Exporte todas as suas transações e dados financeiros do sistema para um arquivo CSV externo.</p>
+          <div>
+            <button onclick="exportarCSV()" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 font-bold px-5 py-2.5 rounded-xl text-xs transition-all active:scale-95 flex items-center gap-2">
+              <i class="fa-solid fa-download"></i> Exportar Dados em CSV
+            </button>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -298,6 +388,28 @@
   <script>
     const API_URL = 'https://centavus-app.onrender.com';
     let usuarioLogado = null;
+    let meuGrafico = null;
+    let cacheTransacoes = []; // Guarda as transações para exportação CSV
+
+    function toggleLoading(show) {
+      const loader = document.getElementById('loadingOverlay');
+      if (show) loader.classList.remove('hidden');
+      else loader.classList.add('hidden');
+    }
+
+    function mascaraMoeda(input) {
+      let v = input.value.replace(/\D/g, '');
+      v = (v / 100).toFixed(2) + '';
+      v = v.replace(".", ",");
+      v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+      input.value = "R$ " + v;
+    }
+
+    function converterValorParaNumero(texto) {
+      if (!texto) return 0;
+      let limpo = texto.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
+      return parseFloat(limpo) || 0;
+    }
 
     function mostrarToast(mensagem) {
       const toast = document.getElementById('toastNotification');
@@ -311,6 +423,44 @@
       }, 3000);
     }
 
+    // Gerenciamento de Foto e Iniciais do Perfil
+    function atualizarAvatarUI(nome, fotoBase64) {
+      const iniciais = nome ? nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NC';
+      
+      // Header
+      const headerContainer = document.getElementById('avatarHeaderContainer');
+      if (fotoBase64) {
+        headerContainer.innerHTML = `<img src="${fotoBase64}" class="w-full h-full object-cover">`;
+      } else {
+        document.getElementById('avatarHeaderInitials').innerText = iniciais;
+      }
+
+      // Aba Configurações
+      const configPreview = document.getElementById('configAvatarPreview');
+      if (fotoBase64) {
+        configPreview.innerHTML = `<img src="${fotoBase64}" class="w-full h-full object-cover">`;
+      } else {
+        document.getElementById('configAvatarInitials').innerText = iniciais;
+      }
+    }
+
+    function carregarFotoPerfil(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64String = e.target.result;
+        if (usuarioLogado) {
+          usuarioLogado.foto = base64String;
+          localStorage.setItem('centavus_user', JSON.stringify(usuarioLogado));
+          atualizarAvatarUI(usuarioLogado.nome, base64String);
+          mostrarToast('Foto de perfil atualizada com sucesso!');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       const hoje = new Date();
       document.getElementById('filtroMes').value = hoje.getMonth() + 1;
@@ -319,9 +469,13 @@
       const usuarioSalvo = localStorage.getItem('centavus_user');
       if (usuarioSalvo) {
         usuarioLogado = JSON.parse(usuarioSalvo);
+        
         document.getElementById('userNameDisplay').innerText = usuarioLogado.nome;
         document.getElementById('cfgNome').value = usuarioLogado.nome;
+        document.getElementById('cfgEmail').value = usuarioLogado.email || 'usuario@centavus.com';
         
+        atualizarAvatarUI(usuarioLogado.nome, usuarioLogado.foto);
+
         const authScreen = document.getElementById('authScreen');
         const appScreen = document.getElementById('appScreen');
         
@@ -368,6 +522,7 @@
       const email = document.getElementById('regEmail').value;
       const senha = document.getElementById('regSenha').value;
 
+      toggleLoading(true);
       try {
         const response = await fetch(`${API_URL}/usuarios`, {
           method: 'POST',
@@ -384,6 +539,8 @@
         }
       } catch (error) {
         alert('Erro ao conectar com a API.');
+      } finally {
+        toggleLoading(false);
       }
     });
 
@@ -392,6 +549,7 @@
       const email = document.getElementById('loginEmail').value;
       const senha = document.getElementById('loginSenha').value;
 
+      toggleLoading(true);
       try {
         const response = await fetch(`${API_URL}/usuarios/login`, {
           method: 'POST',
@@ -405,7 +563,10 @@
 
           document.getElementById('userNameDisplay').innerText = usuarioLogado.nome;
           document.getElementById('cfgNome').value = usuarioLogado.nome;
+          document.getElementById('cfgEmail').value = usuarioLogado.email || email;
           
+          atualizarAvatarUI(usuarioLogado.nome, usuarioLogado.foto);
+
           const authScreen = document.getElementById('authScreen');
           const appScreen = document.getElementById('appScreen');
           
@@ -424,6 +585,8 @@
         }
       } catch (error) {
         alert('Erro ao conectar com a API.');
+      } finally {
+        toggleLoading(false);
       }
     });
 
@@ -465,7 +628,7 @@
       }
     }
 
-    function atualizarNome() {
+    function atualizarDadosPerfil() {
       if (!usuarioLogado) return;
       const novoNome = document.getElementById('cfgNome').value;
       if (!novoNome) return;
@@ -473,7 +636,20 @@
       usuarioLogado.nome = novoNome;
       localStorage.setItem('centavus_user', JSON.stringify(usuarioLogado));
       document.getElementById('userNameDisplay').innerText = novoNome;
-      mostrarToast('Nome atualizado com sucesso!');
+      atualizarAvatarUI(novoNome, usuarioLogado.foto);
+      mostrarToast('Dados de perfil atualizados com sucesso!');
+    }
+
+    function alterarSenha() {
+      const nova = document.getElementById('cfgNovaSenha').value;
+      const confirma = document.getElementById('cfgConfirmaSenha').value;
+      if (!nova || nova !== confirma) {
+        alert('As senhas não coincidem ou estão vazias.');
+        return;
+      }
+      mostrarToast('Senha alterada com sucesso!');
+      document.getElementById('cfgNovaSenha').value = '';
+      document.getElementById('cfgConfirmaSenha').value = '';
     }
 
     function mudarTema(tipo) {
@@ -486,22 +662,46 @@
       }
     }
 
+    function exportarCSV() {
+      if (!cacheTransacoes.length) {
+        alert('Nenhuma transação disponível para exportar.');
+        return;
+      }
+      let csv = 'ID,Descricao,Valor,Tipo,Metodo,Categoria,Data\n';
+      cacheTransacoes.forEach(t => {
+        csv += `${t.id},"${t.descricao}",${t.valor},${t.tipo},${t.metodoPagamento},${t.categoria},${t.dataTransacao}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `centavus_backup_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      mostrarToast('Backup CSV exportado com sucesso!');
+    }
+
     async function carregarTransacoes() {
       if (!usuarioLogado) return;
       
       const mesSelecionado = parseInt(document.getElementById('filtroMes').value);
       const anoSelecionado = parseInt(document.getElementById('filtroAno').value);
 
+      toggleLoading(true);
       try {
         const response = await fetch(`${API_URL}/transacoes/usuario/${usuarioLogado.id}`);
         if (response.ok) {
           const transacoes = await response.json();
+          cacheTransacoes = transacoes; // Armazena para o CSV
           
           let totalGastoMes = 0;
           let totalPixDebitoMes = 0;
           let totalImpactoCreditoMes = 0;
           let totalCofrinhoGeral = 0;
           let totalGastoMesAnterior = 0;
+          
+          let gastosCategoria = {
+            'Alimentação': 0, 'Transporte': 0, 'Lazer': 0, 'Eletrônicos/Outros': 0
+          };
 
           let htmlCredito = '';
           let htmlPixDebito = '';
@@ -545,6 +745,8 @@
                 if (tMes === mesSelecionado && tAno === anoSelecionado) {
                   totalPixDebitoMes += t.valor;
                   totalGastoMes += t.valor;
+                  if (gastosCategoria[t.categoria] !== undefined) gastosCategoria[t.categoria] += t.valor;
+
                   htmlPixDebito += `
                     <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-md">
                       <div>
@@ -566,6 +768,7 @@
                   if (currentMonth === mesSelecionado && currentYear === anoSelecionado) {
                     totalImpactoCreditoMes += valorParcela;
                     totalGastoMes += valorParcela;
+                    if (gastosCategoria[t.categoria] !== undefined) gastosCategoria[t.categoria] += valorParcela;
 
                     htmlCredito += `
                       <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 flex justify-between items-center shadow-md">
@@ -612,12 +815,79 @@
             compEl.className = 'text-[10px] text-emerald-400 font-semibold mt-1';
           }
 
-          document.getElementById('listaCredito').innerHTML = htmlCredito || '<p class="text-sm text-slate-500 italic">Nenhuma fatura de crédito para este mês.</p>';
-          document.getElementById('listaPixDebito').innerHTML = htmlPixDebito || '<p class="text-sm text-slate-500 italic">Nenhum gasto no Pix ou Débito neste mês.</p>';
-          document.getElementById('listaCofrinho').innerHTML = htmlCofrinho || '<p class="text-sm text-slate-500 italic">Nenhum depósito feito neste mês específico.</p>';
+          // Orçamento e Alerta
+          const limite = parseFloat(document.getElementById('inputOrcamento').value) || 1;
+          const porcentagemGasto = (totalGastoMes / limite) * 100;
+          const barra = document.getElementById('barraOrcamento');
+          const statusMsg = document.getElementById('statusOrcamentoMsg');
+          const statusPercent = document.getElementById('statusOrcamentoPercent');
+
+          barra.style.width = `${Math.min(porcentagemGasto, 100)}%`;
+          statusPercent.innerText = `Você gastou ${porcentagemGasto.toFixed(1)}% do seu orçamento.`;
+
+          if (porcentagemGasto >= 100) {
+            barra.className = "absolute top-0 left-0 w-full h-1 bg-rose-500 transition-all duration-500";
+            statusMsg.innerText = "Orçamento Estourado!";
+            statusMsg.className = "text-sm font-bold text-rose-500 mb-1";
+          } else if (porcentagemGasto >= 80) {
+            barra.className = "absolute top-0 left-0 w-full h-1 bg-amber-500 transition-all duration-500";
+            statusMsg.innerText = "Atenção: Limite Próximo!";
+            statusMsg.className = "text-sm font-bold text-amber-500 mb-1";
+          } else {
+            barra.className = "absolute top-0 left-0 w-full h-1 bg-emerald-500 transition-all duration-500";
+            statusMsg.innerText = "Dentro do Limite!";
+            statusMsg.className = "text-sm font-bold text-emerald-400 mb-1";
+          }
+
+          // Gráfico Chart.js
+          const ctx = document.getElementById('graficoCategorias');
+          const valoresGrafico = Object.values(gastosCategoria);
+          
+          if (totalGastoMes === 0) {
+            ctx.style.display = 'none';
+            document.getElementById('graficoVazio').classList.remove('hidden');
+          } else {
+            ctx.style.display = 'block';
+            document.getElementById('graficoVazio').classList.add('hidden');
+            
+            if (meuGrafico) meuGrafico.destroy();
+            
+            meuGrafico = new Chart(ctx, {
+              type: 'doughnut',
+              data: {
+                labels: Object.keys(gastosCategoria),
+                datasets: [{
+                  data: valoresGrafico,
+                  backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f43f5e'],
+                  borderWidth: 0,
+                  hoverOffset: 4
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans' } } }
+                }
+              }
+            });
+          }
+
+          const emptyStateHTML = (msg) => `
+            <div class="bg-slate-950/50 p-8 rounded-2xl border border-slate-800/50 text-center flex flex-col items-center justify-center gap-2">
+              <i class="fa-solid fa-folder-open text-slate-600 text-3xl mb-1"></i>
+              <p class="text-sm font-semibold text-slate-400">${msg}</p>
+            </div>
+          `;
+
+          document.getElementById('listaCredito').innerHTML = htmlCredito || emptyStateHTML('Nenhuma fatura para este mês.');
+          document.getElementById('listaPixDebito').innerHTML = htmlPixDebito || emptyStateHTML('Nenhum gasto neste mês.');
+          document.getElementById('listaCofrinho').innerHTML = htmlCofrinho || emptyStateHTML('Nenhum depósito neste mês.');
         }
       } catch (e) {
         console.error("Erro ao buscar transações", e);
+      } finally {
+        toggleLoading(false);
       }
     }
 
@@ -625,7 +895,14 @@
       e.preventDefault();
       if (!usuarioLogado) return;
 
-      const valorTotal = parseFloat(document.getElementById('tValor').value);
+      const valorTexto = document.getElementById('tValor').value;
+      const valorTotal = converterValorParaNumero(valorTexto);
+
+      if (valorTotal <= 0) {
+        alert('Insira um valor válido maior que zero.');
+        return;
+      }
+
       const tipo = document.getElementById('tTipo').value;
       const metodo = document.getElementById('tMetodo').value;
       const categoria = document.getElementById('tCategoria').value;
@@ -644,6 +921,7 @@
         valorParcela: valorParcela
       };
 
+      toggleLoading(true);
       try {
         const response = await fetch(`${API_URL}/transacoes`, {
           method: 'POST',
@@ -654,6 +932,7 @@
         if (response.ok) {
           mostrarToast('Movimentação salva com sucesso!');
           this.reset();
+          document.getElementById('tValor').value = "R$ 0,00";
           toggleParcelas();
           carregarTransacoes();
         } else {
@@ -661,6 +940,8 @@
         }
       } catch (error) {
         alert('Erro de conexão.');
+      } finally {
+        toggleLoading(false);
       }
     });
   </script>
