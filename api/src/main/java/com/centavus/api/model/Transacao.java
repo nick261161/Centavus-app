@@ -32,6 +32,14 @@ public class Transacao {
     @Column(nullable = false)
     private LocalDate dataTransacao;
 
+    // --- NOVOS CAMPOS PARA O PARCELAMENTO ---
+    @Column(nullable = true)
+    private Integer parcelas;
+
+    @Column(nullable = true)
+    private Double valorParcela;
+    // ----------------------------------------
+
     // Construtores, Getters e Setters
     public Transacao() {}
 
@@ -58,4 +66,12 @@ public class Transacao {
 
     public LocalDate getDataTransacao() { return dataTransacao; }
     public void setDataTransacao(LocalDate dataTransacao) { this.dataTransacao = dataTransacao; }
+
+    // --- GETTERS E SETTERS DAS PARCELAS ---
+    public Integer getParcelas() { return parcelas; }
+    public void setParcelas(Integer parcelas) { this.parcelas = parcelas; }
+
+    public Double getValorParcela() { return valorParcela; }
+    public void setValorParcela(Double valorParcela) { this.valorParcela = valorParcela; }
+    // --------------------------------------
 }
